@@ -5,12 +5,11 @@
 package controller;
 
 import dao.SetoranDAO;
-import dao.PengeluaranDAO; // Tambahan untuk Mingguan
+import dao.PengeluaranDAO;
 import model.Setoran;
-import model.Pengeluaran; // Tambahan untuk Mingguan
+import model.Pengeluaran;
 import model.Tunggakan;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.List;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -26,51 +25,60 @@ public class ReportServlet extends HttpServlet {
             throws ServletException, IOException {
         
         String type = request.getParameter("type");
-        SetoranDAO setoranDAO = new SetoranDAO(); // Ganti nama variabel jadi lebih jelas
         
         // =====================================================================
-        // 1. LAPORAN KAS MINGGUAN (Fitur Baru)
+        // 1. LAPORAN KESELURUHAN (Sebelumnya Mingguan/Weekly)
+        //    Logika: Menampilkan SEMUA data tanpa filter tanggal
         // =====================================================================
-        if ("weekly".equals(type)) {
+        if ("weekly".equals(type) || type == null) { 
+            // Kita tetap pakai "weekly" agar tidak perlu ubah link di menu.jsp
             
-            // Tentukan Rentang Tanggal (7 hari terakhir)
-            LocalDate endDate = LocalDate.now();
-            LocalDate startDate = endDate.minusDays(6);
-            
-            // Konversi ke java.sql.Date
-            java.sql.Date sqlStart = java.sql.Date.valueOf(startDate);
-            java.sql.Date sqlEnd = java.sql.Date.valueOf(endDate);
-            
-            // Ambil Data
+            SetoranDAO setoranDAO = new SetoranDAO();
             PengeluaranDAO pengeluaranDAO = new PengeluaranDAO();
-            List<Setoran> listMasuk = setoranDAO.getSetoranByDate(sqlStart, sqlEnd);
-            List<Pengeluaran> listKeluar = pengeluaranDAO.getPengeluaranByDate(sqlStart, sqlEnd);
+
+            // AMBIL SEMUA DATA (Pastikan method getAll() sudah ada di DAO Anda)
+            // Jika merah, cek nama method di SetoranDAO.java (misal: getAllSetoran() atau getSetoran())
+            List<Setoran> listMasuk = setoranDAO.getAll(); 
+            List<Pengeluaran> listKeluar = pengeluaranDAO.getAll(); 
             
-            // Hitung Total
-            double totalMasuk = listMasuk.stream().mapToDouble(Setoran::getJumlah).sum();
-            double totalKeluar = listKeluar.stream().mapToDouble(Pengeluaran::getJumlah).sum();
+            // HITUNG TOTAL MANUAL
+            double totalMasuk = 0;
+            if (listMasuk != null) {
+                for (Setoran s : listMasuk) {
+                    totalMasuk += s.getJumlah();
+                }
+            }
             
-            // Kirim ke JSP
-            request.setAttribute("startDate", sqlStart);
-            request.setAttribute("endDate", sqlEnd);
+            double totalKeluar = 0;
+            if (listKeluar != null) {
+                for (Pengeluaran p : listKeluar) {
+                    totalKeluar += p.getJumlah();
+                }
+            }
+            
+            // Kirim Data ke JSP
             request.setAttribute("listMasuk", listMasuk);
             request.setAttribute("listKeluar", listKeluar);
             request.setAttribute("totalMasuk", totalMasuk);
             request.setAttribute("totalKeluar", totalKeluar);
             
+            // Forward ke halaman mingguan.jsp (yang tampilannya sudah diubah jadi Keseluruhan)
             request.getRequestDispatcher("report/mingguan.jsp").forward(request, response);
 
         // =====================================================================
-        // 2. LAPORAN TUNGGAKAN (Kode Anda tadi ada di sini)
+        // 2. LAPORAN TUNGGAKAN
         // =====================================================================
         } else if ("tunggakan".equals(type)) {
             
-            // 1. Tentukan Tarif
+            SetoranDAO setoranDAO = new SetoranDAO();
+
+            // 1. Tentukan Tarif & Target
             double kasPerMinggu = 5000; 
-            int mingguBerjalan = 4;     
+            int mingguBerjalan = 4; // Nanti bisa dibuat otomatis berdasarkan tanggal
             double targetWajib = kasPerMinggu * mingguBerjalan; 
             
-            // 2. Ambil Data dari DAO
+            // 2. Ambil Data
+            // Pastikan method getRekapTunggakan ada di SetoranDAO Anda
             List<Tunggakan> listTunggakan = setoranDAO.getRekapTunggakan(targetWajib);
             
             // 3. Kirim ke JSP
@@ -80,16 +88,6 @@ public class ReportServlet extends HttpServlet {
             
             request.getRequestDispatcher("report/tunggakan.jsp").forward(request, response);
 
-        // =====================================================================
-        // 3. LAPORAN SALDO (Opsional/Dashboard)
-        // =====================================================================
-        } else if ("saldo".equals(type)) {
-            
-            double total = setoranDAO.getTotalSetoran();
-            request.setAttribute("reportTitle", "Laporan Saldo Akhir");
-            request.setAttribute("totalAmount", total);
-            request.getRequestDispatcher("report/index.jsp").forward(request, response);
-            
         } else {
             // Jika tipe tidak dikenali, kembalikan ke dashboard
             response.sendRedirect("DashboardServlet");

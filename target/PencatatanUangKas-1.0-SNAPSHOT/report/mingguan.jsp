@@ -1,26 +1,21 @@
 <%-- 
-    Document   : mingguan
-    Created on : 10 Dec 2025, 12.17.23
-    Author     : LATIF WIBOWO
+    Document   : mingguan (Sekarang jadi Laporan Keseluruhan)
 --%>
-
 <%@page import="java.util.List"%>
 <%@page import="model.Setoran"%>
 <%@page import="model.Pengeluaran"%>
 <%@page import="java.text.NumberFormat"%>
 <%@page import="java.util.Locale"%>
 
-<%-- 1. LAYOUT UTAMA --%>
 <%@ include file="../header.jsp" %>
 <%@ include file="../menu.jsp" %>
 
 <%
-    // Helper Format Rupiah
     NumberFormat rp = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
     
-    // Ambil Data Angka
-    double tMasuk = (double) request.getAttribute("totalMasuk");
-    double tKeluar = (double) request.getAttribute("totalKeluar");
+    // Ambil Data (Handle null biar aman)
+    double tMasuk = (request.getAttribute("totalMasuk") != null) ? (double) request.getAttribute("totalMasuk") : 0;
+    double tKeluar = (request.getAttribute("totalKeluar") != null) ? (double) request.getAttribute("totalKeluar") : 0;
     double selisih = tMasuk - tKeluar;
 %>
 
@@ -28,10 +23,8 @@
     
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3 class="fw-bold text-secondary mb-0"><i class="fas fa-chart-line me-2"></i>Laporan Mingguan</h3>
-            <p class="text-muted small mb-0">
-                Periode: <span class="badge bg-light text-dark border"><%= request.getAttribute("startDate") %></span> s/d <span class="badge bg-light text-dark border"><%= request.getAttribute("endDate") %></span>
-            </p>
+            <h3 class="fw-bold text-secondary mb-0"><i class="fas fa-book-open me-2"></i>Laporan Keseluruhan</h3>
+            <p class="text-muted small mb-0">Rekapitulasi seluruh transaksi pemasukan dan pengeluaran.</p>
         </div>
         <div>
              <a href="${pageContext.request.contextPath}/DashboardServlet" class="btn btn-light btn-sm shadow-sm me-2">
@@ -47,7 +40,7 @@
         <div class="col-md-4">
             <div class="card border-0 shadow-sm text-white" style="background: linear-gradient(45deg, #11998e, #38ef7d);">
                 <div class="card-body">
-                    <h6 class="text-uppercase mb-1 opacity-75">Total Pemasukan</h6>
+                    <h6 class="text-uppercase mb-1 opacity-75">Total Pemasukan (All Time)</h6>
                     <h3 class="fw-bold mb-0"><%= rp.format(tMasuk) %></h3>
                 </div>
             </div>
@@ -55,7 +48,7 @@
         <div class="col-md-4">
             <div class="card border-0 shadow-sm text-white" style="background: linear-gradient(45deg, #cb2d3e, #ef473a);">
                 <div class="card-body">
-                    <h6 class="text-uppercase mb-1 opacity-75">Total Pengeluaran</h6>
+                    <h6 class="text-uppercase mb-1 opacity-75">Total Pengeluaran (All Time)</h6>
                     <h3 class="fw-bold mb-0"><%= rp.format(tKeluar) %></h3>
                 </div>
             </div>
@@ -63,7 +56,7 @@
         <div class="col-md-4">
             <div class="card border-0 shadow-sm text-white" style="background: linear-gradient(45deg, #2980b9, #6dd5fa);">
                 <div class="card-body">
-                    <h6 class="text-uppercase mb-1 opacity-75">Surplus / Defisit</h6>
+                    <h6 class="text-uppercase mb-1 opacity-75">Sisa Saldo Akhir</h6>
                     <h3 class="fw-bold mb-0"><%= rp.format(selisih) %></h3>
                 </div>
             </div>
@@ -71,15 +64,14 @@
     </div>
 
     <div class="row">
-        
         <div class="col-lg-6 mb-4">
             <div class="card card-custom border-0 h-100 shadow-sm">
                 <div class="card-header bg-success text-white py-2">
-                    <i class="fas fa-arrow-down me-2"></i> Rincian Pemasukan
+                    <i class="fas fa-arrow-down me-2"></i> Semua Pemasukan
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover mb-0 align-middle small">
+                        <table class="table table-striped table-hover mb-0 align-middle small table-sm">
                             <thead class="table-light">
                                 <tr>
                                     <th>Tgl</th>
@@ -98,12 +90,8 @@
                                     <td class="fw-bold text-secondary"><%= s.getNamaMahasiswa() %></td>
                                     <td class="text-end text-success fw-bold"><%= rp.format(s.getJumlah()) %></td>
                                 </tr>
-                                <% 
-                                        }
-                                    } else { 
-                                %>
-                                <tr><td colspan="3" class="text-center text-muted py-3">Tidak ada data.</td></tr>
-                                <% } %>
+                                <%      }
+                                    } %>
                             </tbody>
                         </table>
                     </div>
@@ -114,11 +102,11 @@
         <div class="col-lg-6 mb-4">
             <div class="card card-custom border-0 h-100 shadow-sm">
                 <div class="card-header bg-danger text-white py-2">
-                    <i class="fas fa-arrow-up me-2"></i> Rincian Pengeluaran
+                    <i class="fas fa-arrow-up me-2"></i> Semua Pengeluaran
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover mb-0 align-middle small">
+                        <table class="table table-striped table-hover mb-0 align-middle small table-sm">
                             <thead class="table-light">
                                 <tr>
                                     <th>Tgl</th>
@@ -137,19 +125,15 @@
                                     <td><%= p.getKeperluan() %></td>
                                     <td class="text-end text-danger fw-bold"><%= rp.format(p.getJumlah()) %></td>
                                 </tr>
-                                <% 
-                                        }
-                                    } else { 
-                                %>
-                                <tr><td colspan="3" class="text-center text-muted py-3">Tidak ada data.</td></tr>
-                                <% } %>
+                                <%      }
+                                    } %>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
-
-    </div> </div>
+    </div>
+</div>
 
 <%@ include file="../footer.jsp" %>
