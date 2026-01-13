@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.RequestDispatcher; // PENTING: Import ini ditambah
 
 @WebServlet(name = "LoginServlet", urlPatterns = {"/LoginServlet"})
 public class LoginServlet extends HttpServlet {
@@ -28,11 +29,12 @@ public class LoginServlet extends HttpServlet {
         boolean isValid = false;
         String namaUser = "";
         
+        // 1. Cek Login ke Database
         if ("admin".equals(role)) {
             AdminDAO adminDAO = new AdminDAO();
             if (adminDAO.login(user, pass)) {
                 isValid = true;
-                namaUser = "Administrator"; // Atau ambil dari DB jika perlu
+                namaUser = "Administrator"; 
             }
         } else if ("mahasiswa".equals(role)) {
             MahasiswaDAO mhsDAO = new MahasiswaDAO();
@@ -42,18 +44,26 @@ public class LoginServlet extends HttpServlet {
             }
         }
         
+        // 2. Logika Redirect vs Forward
         if (isValid) {
-            // Login Sukses: Buat Session
+            // === LOGIN SUKSES ===
             HttpSession session = request.getSession();
             session.setAttribute("userRole", role);
-            session.setAttribute("userId", user); // Simpan Username/NIM
-            session.setAttribute("userName", namaUser); // Simpan Nama Asli
+            session.setAttribute("userId", user); 
+            session.setAttribute("userName", namaUser); 
             
-            // Redirect ke Dashboard
+            // Redirect aman dipakai kalau sukses (pindah halaman total)
             response.sendRedirect("DashboardServlet");
+            
         } else {
-            // Login Gagal
-            response.sendRedirect("login.jsp?status=gagal");
+            // === LOGIN GAGAL (BAGIAN INI YANG DIUBAH) ===
+            
+            // A. Simpan pesan error agar bisa dibaca di JSP
+            request.setAttribute("errorMessage", "Username atau Password Anda salah!");
+            
+            // B. Gunakan RequestDispatcher (Forward) agar pesan TIDAK HILANG
+            RequestDispatcher dispatcher = request.getRequestDispatcher("login.jsp");
+            dispatcher.forward(request, response);
         }
     }
 }

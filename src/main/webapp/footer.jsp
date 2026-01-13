@@ -5,7 +5,7 @@
 --%>
 
 <footer class="text-center py-4 mt-5 text-muted border-top bg-white">
-        <small>&copy; 2025 Sekolah Tinggi Teknologi Terpadu Nurul Fikri - Projek PBO</small>
+        <small>© 2026 Sistem Uang Kas. Designed by group 21.</small>
     </footer>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
